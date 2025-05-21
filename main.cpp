@@ -36,7 +36,7 @@ lemlib::Drivetrain drivetrain(&leftMotors, // left motor group
 );
 
 // lateral motion controller
-lemlib::ControllerSettings linearController(10, // proportional gain (kP)
+lemlib::ControllerSettings linearController(7.79, // proportional gain (kP)
                                             0, // integral gain (kI)
                                             4.075, // derivative gain (kD)
                                             3, // anti windup
@@ -48,7 +48,7 @@ lemlib::ControllerSettings linearController(10, // proportional gain (kP)
 );
 
 // angular motion controller
-lemlib::ControllerSettings angularController(2, // proportional gain (kP)
+lemlib::ControllerSettings angularController(2.99, // proportional gain (kP)
                                              0, // integral gain (kI)
                                              10, // derivative gain (kD)
                                              3, // 3 anti windup old = 3
@@ -145,7 +145,11 @@ ASSET(example_txt); // '.' replaced with "_" to make c++ happy
 void autonomous() {
 	  // set position to x:0, y:0, heading:0
 	  chassis.setPose(0, 0, 0);
-      chassis.turnToHeading(90, 100000);
+      chassis.moveToPoint(0, 12, 5000);
+      chassis.waitUntil(12);
+      chassis.turnToPoint(12, 0, 5000);
+      chassis.moveToPoint(0, 12, 5000);
+      //chassis.moveToPoint(12, 12, 5000);
 	  // turn to face heading 90 with a very long timeout
 	//   chassis.moveToPoint(0, 6 , 5000);
     //   chassis.waitUntil(6);
