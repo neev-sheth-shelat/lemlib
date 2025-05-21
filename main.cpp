@@ -22,6 +22,10 @@ lemlib::TrackingWheel horizontal(&horizontalEnc, lemlib::Omniwheel::NEW_275, -4.
 // vertical tracking wheel. 2.75" diameter, 2.5" offset, left of the robot (negative)
 lemlib::TrackingWheel vertical(&verticalEnc, lemlib::Omniwheel::NEW_275, -0.25);
 
+pros::Motor intake_left(4, pros::MotorGearset::green);
+pros::Motor intake_right(3, pros::MotorGearset::green);
+pros::Motor intake_top(13, pros::MotorGearset::blue);
+
 // drivetrain settings
 lemlib::Drivetrain drivetrain(&leftMotors, // left motor group
                               &rightMotors, // right motor group
@@ -44,14 +48,14 @@ lemlib::ControllerSettings linearController(10, // proportional gain (kP)
 );
 
 // angular motion controller
-lemlib::ControllerSettings angularController(2.075, // proportional gain (kP)
+lemlib::ControllerSettings angularController(2, // proportional gain (kP)
                                              0, // integral gain (kI)
-                                             11.8, // derivative gain (kD)
-                                             3, // 3 anti windup
-                                             1, // 1 small error range, in degrees
-                                             100, // 100 small error range timeout, in milliseconds
-                                             3, // 3 large error range, in degrees
-                                             500, // 500 large error range timeout, in milliseconds
+                                             10, // derivative gain (kD)
+                                             3, // 3 anti windup old = 3
+                                             1, // 1 small error range, in degrees old = 1
+                                             100, // 100 small error range timeout, in milliseconds old = 100
+                                             3, // 3 large error range, in degrees old = 3
+                                             500, // 500 large error range timeout, in milliseconds old = 500
                                              0 // 0 maximum acceleration (slew)
 );
 
@@ -141,17 +145,18 @@ ASSET(example_txt); // '.' replaced with "_" to make c++ happy
 void autonomous() {
 	  // set position to x:0, y:0, heading:0
 	  chassis.setPose(0, 0, 0);
+      chassis.turnToHeading(90, 100000);
 	  // turn to face heading 90 with a very long timeout
-	  chassis.moveToPoint(0, 12 ,1000);
-      chassis.waitUntil(12);
-      chassis.turnToHeading(90, 5000);
-      chassis.moveToPoint(12, 0, 100000);
-    
+	//   chassis.moveToPoint(0, 6 , 5000);
+    //   chassis.waitUntil(6);
+    //   chassis.turnToHeading(90, 5000);
+    //   chassis.moveToPoint(6, 6, 5000);
+    //   intake_right.move(75);
+    //   intake_left.move(75);
+    //   intake_top.move(75);
 }
+ //* Runs in driver control
 
-/**
- * Runs in driver control
- */
 void opcontrol() {
     // controller
     // loop to continuously update motors
@@ -163,5 +168,32 @@ void opcontrol() {
         chassis.tank(leftY, rightX);
         // delay to save resources
         pros::delay(10);
-    }
+    
+
+    if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)){
+			intake_left.move_velocity(-200);
+			intake_right.move_velocity(200);
+		}
+	else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)){
+			intake_left.move_velocity(200);
+			intake_right.move_velocity(-200);
+		}
+	else{
+			intake_left.move_velocity(0);
+			intake_right.move_velocity(0);
+}
+
+if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)){
+			intake_top.move_velocity(600);
+			
+		}
+	else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)){
+			intake_top.move_velocity(-600);
+			
+		}
+	else{
+			intake_top.move_velocity(0);
+		
+}
+}
 }
