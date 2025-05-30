@@ -9,6 +9,9 @@ pros::MotorGroup leftMotors({-18, -11, -2},
                             pros::MotorGearset::blue); // left motor group - ports 18 (reversed), 11(reversed), 2 (reversed)
 pros::MotorGroup rightMotors({17, 1, 15}, pros::MotorGearset::blue); // right motor group - ports 1, 17, 15 
 
+pros::MotorGroup intake({13, -3},
+                            pros::MotorGearset::blue);
+
 // Inertial Sensor on port 6
 pros::Imu imu(6);
 
@@ -22,9 +25,13 @@ lemlib::TrackingWheel horizontal(&horizontalEnc, lemlib::Omniwheel::NEW_275, -4.
 // vertical tracking wheel. 2.75" diameter, 2.5" offset, left of the robot (negative)
 lemlib::TrackingWheel vertical(&verticalEnc, lemlib::Omniwheel::NEW_275, -0.25);
 
-pros::Motor intake_left(4, pros::MotorGearset::green);
-pros::Motor intake_right(3, pros::MotorGearset::green);
-pros::Motor intake_top(13, pros::MotorGearset::blue);
+// pros::Motor intake_left(4, pros::MotorGearset::green);
+// pros::Motor intake_right(3, pros::MotorGearset::green);
+// pros::Motor intake_bottom(3, pros::MotorGearset::blue);
+// pros::Motor intake_top(13, pros::MotorGearset::blue);
+
+pros::adi::DigitalOut ramp1('A', false);
+pros::adi::DigitalOut ramp2('B', false);
 
 // drivetrain settings
 lemlib::Drivetrain drivetrain(&leftMotors, // left motor group
@@ -36,9 +43,9 @@ lemlib::Drivetrain drivetrain(&leftMotors, // left motor group
 );
 
 // lateral motion controller
-lemlib::ControllerSettings linearController(7.79, // proportional gain (kP)
+lemlib::ControllerSettings linearController(13.5, // proportional gain (kP)
                                             0, // integral gain (kI)
-                                            4.075, // derivative gain (kD)
+                                            28, // derivative gain (kD)
                                             3, // anti windup
                                             1, // small error range, in inches
                                             100, // small error range timeout, in milliseconds
@@ -92,6 +99,8 @@ void initialize() {
     pros::lcd::initialize(); // initialize brain screen
     chassis.calibrate(); // calibrate sensors
 
+    ramp1.set_value(true);
+	ramp2.set_value(true);
 	// while (true) { // infinite loop
     //     // print measurements from the adi encoder
     //     pros::lcd::print(0, "Vertical Rotation sensor: %i", verticalEnc.get_position());
@@ -145,10 +154,17 @@ ASSET(example_txt); // '.' replaced with "_" to make c++ happy
 void autonomous() {
 	  // set position to x:0, y:0, heading:0
 	  chassis.setPose(0, 0, 0);
-      chassis.moveToPoint(0, 12, 5000);
-      chassis.waitUntil(12);
-      chassis.turnToPoint(12, 0, 5000);
-      chassis.moveToPoint(0, 12, 5000);
+      intake.move_velocity(600);
+      chassis.moveToPoint(0, 16, 5000);
+      chassis.waitUntil(16);
+      intake.move_velocity(0);
+      pros::delay(1000);
+      chassis.turnToHeading(270, 5000);
+      chassis.moveToPoint(-8, 16, 1000);
+      chassis.turnToHeading(90, 1000);
+      chassis.moveToPoint(-8, 18, 1000);
+      chassis.turnToHeading(180, 5000);
+    //   chassis.turnToHeading(180, 5000);
       //chassis.moveToPoint(12, 12, 5000);
 	  // turn to face heading 90 with a very long timeout
 	//   chassis.moveToPoint(0, 6 , 5000);
@@ -173,31 +189,41 @@ void opcontrol() {
         // delay to save resources
         pros::delay(10);
     
-
-    if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)){
-			intake_left.move_velocity(-200);
-			intake_right.move_velocity(200);
+  
+//     if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)){
+// 			intake_left.move_velocity(-200);
+// 			intake_right.move_velocity(200);
+// 		}
+// 	else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)){
+// 			intake_left.move_velocity(200);
+// 			intake_right.move_velocity(-200);
+// 		}
+// 	else{
+// 			intake_left.move_velocity(0);
+// 			intake_right.move_velocity(0);
+// }
+	if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)){
+			intake.move_velocity(-600);
+			
 		}
 	else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)){
-			intake_left.move_velocity(200);
-			intake_right.move_velocity(-200);
-		}
-	else{
-			intake_left.move_velocity(0);
-			intake_right.move_velocity(0);
-}
-
-if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)){
-			intake_top.move_velocity(600);
-			
-		}
-	else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)){
-			intake_top.move_velocity(-600);
+			intake.move_velocity(600);
 			
 		}
 	else{
-			intake_top.move_velocity(0);
+			intake.move_velocity(0);
 		
 }
+
+if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)){
+			ramp1.set_value(true);
+			ramp2.set_value(true);
+		}
+		if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)){
+			ramp1.set_value(false);
+			ramp2.set_value(false);
+		}	
 }
+
+
 }
